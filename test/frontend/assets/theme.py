@@ -1,0 +1,7 @@
+BG = "#f5f7fa"
+PRIMARY = "#4a90e2"
+SECONDARY = "#dbe9f4"
+TEXT = "#333333"
+SUCCESS = "#2ecc71"
+WARNING = "#f1c40f"
+DANGER = "#e74c3c"
