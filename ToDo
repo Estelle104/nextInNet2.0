@@ -1,0 +1,64 @@
+Créer le hotspot Wi‑Fi (LE PLUS IMPORTANT)
+
+    Dans le terminal :
+
+    nmcli device wifi hotspot ssid nextIn_Net 
+
+________________
+
+Commandes utiles associées
+
+🔹 Voir le hotspot actif :
+
+nmcli device status
+
+
+🔹 Arrêter le hotspot :
+
+nmcli connection down Hotspot
+
+
+🔹 Supprimer la configuration :
+
+nmcli connection delete Hotspot
+_________________
+
+Tu dois voir :
+
+    wlan0  wifi  connected  Projet-Reseau
+
+________________
+
+Vérifier l’adresse IP du serveur (TOI)
+
+    ip a
+
+    Tu verras quelque chose comme :
+
+    wlan0: inet 192.168.12.1
+
+    👉 192.168.12.1 = IP du serveur
+    👉 Les clients auront : 192.168.12.X
+
+    ⚠️ Retenez bien cette IP (à mettre dans le code client)
+
+_________________
+Ordre CORRECT pour lancer le projet
+
+Toujours dans cet ordre 👇
+🖥️ Sur le PC serveur (toi)
+
+python3 serveur/dhcp_server.py
+
+Dans un autre terminal :
+
+python3 serveur/log_server.py
+
+💻 Sur les PC clients
+
+    Se connecter au Wi‑Fi Projet-Reseau
+
+    Lancer :
+
+python3 client/client_ui.py
+
