@@ -49,7 +49,7 @@ main_frame.pack(fill="both", expand=True)
 # Liste des notifications
 notif_frame = tk.Frame(main_frame, width=300, bg="#ecf0f1")
 notif_frame.pack(side="left", fill="y")
-tk.Label(notif_frame, text="Notifications de sécurité", bg="#ecf0f1", font=("Arial", 12, "bold")).pack(pady=10)
+tk.Label(notif_frame, text="Noti10fications de sécurité", bg="#ecf0f1", font=("Arial", 12, "bold")).pack(pady=10)
 
 notif_listbox = tk.Listbox(notif_frame, font=("Arial", 10))
 notif_listbox.pack(fill="both", expand=True, padx=10, pady=5)
