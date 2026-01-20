@@ -11,15 +11,28 @@ sock.listen(5)
 
 print(f"Serveur de logs démarré (TCP {LOG_PORT})")
 
+def get_logs(log_type):
+    try:
+        with open(LOG_FILE, "r") as f:
+            logs = f.readlines()
+        if log_type == "realtime":
+            return logs[-10:]  # Return the last 10 logs for real-time logs
+        elif log_type == "history":
+            return logs  # Return all logs for history
+        else:
+            return ["[ERROR] Type de log inconnu."]
+    except FileNotFoundError:
+        return ["[ERROR] Fichier de log introuvable."]
+
 while True:
     c, a = sock.accept()
     try:
-        msg = c.recv(1024).decode()
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        with open(LOG_FILE, "a") as f:
-            f.write(f"{now}||{msg}\n")
-    except Exception:
-        pass
+        msg = c.recv(1024).decode().strip()  # Receive the log type (e.g., 'realtime' or 'history')
+        logs = get_logs(msg)  # Fetch the appropriate logs
+        response = "\n".join(logs)  # Join logs into a single string
+        c.sendall(response.encode())  # Send the logs back to the client
+    except Exception as e:
+        error_message = f"[ERROR] {e}"
+        c.sendall(error_message.encode())
     finally:
         c.close()
