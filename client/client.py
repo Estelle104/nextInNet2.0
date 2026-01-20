@@ -1,5 +1,10 @@
+<<<<<<< Updated upstream
 import tkinter as tk
 from tkinter import messagebox
+=======
+import socket
+import platform  # Nécessaire pour détecter l'OS
+>>>>>>> Stashed changes
 
 def valider_login():
     username = entry_username.get()
@@ -17,6 +22,7 @@ def valider_login():
 def quitter():
     fenetre.destroy()
 
+<<<<<<< Updated upstream
 # Création de la fenêtre
 fenetre = tk.Tk()
 fenetre.title("Login - Connexion Serveur")
@@ -27,6 +33,13 @@ fenetre.configure(bg="#ced4da")
 # Frame principal avec un style moderne
 main_frame = tk.Frame(fenetre, bg="#adb5bd", bd=2, relief="raised")
 main_frame.pack(pady=30, padx=30, fill="both", expand=True)
+=======
+try:
+    client.connect((SERVER_IP, PORT))
+    client.send(os_name.encode())
+    reponse = client.recv(1024).decode()
+    print("Réponse du serveur :", reponse)
+>>>>>>> Stashed changes
 
 # Titre
 titre = tk.Label(main_frame, text="CONNEXION AU SERVEUR", 
