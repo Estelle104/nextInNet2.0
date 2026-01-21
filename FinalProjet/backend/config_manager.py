@@ -4,7 +4,6 @@ Charge les fichiers de configuration et les expose globalement
 """
 
 import os
-import configparser
 from pathlib import Path
 
 # Déterminer le répertoire de configuration
@@ -27,7 +26,6 @@ class ConfigManager:
             with open(config_path, 'r', encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
-                    # Ignorer les commentaires et lignes vides
                     if not line or line.startswith('#'):
                         continue
                     
@@ -50,7 +48,6 @@ class ConfigManager:
             with open(config_path, 'r', encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
-                    # Ignorer les commentaires et lignes vides
                     if not line or line.startswith('#'):
                         continue
                     
@@ -65,7 +62,7 @@ class ConfigManager:
         return users
     
     def _load_devices(self, filename):
-        """Charge le fichier des appareils (IP|MAC)"""
+        """Charge le fichier des appareils (MAC|IP)"""
         devices = []
         config_path = os.path.join(CONFIG_DIR, filename)
         
@@ -73,15 +70,14 @@ class ConfigManager:
             with open(config_path, 'r', encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
-                    # Ignorer les commentaires et lignes vides
                     if not line or line.startswith('#'):
                         continue
                     
                     if '|' in line:
-                        ip, mac = line.split('|', 1)
+                        mac, ip = line.split('|', 1)
                         devices.append({
-                            'ip': ip.strip(),
-                            'mac': mac.strip()
+                            'mac': mac.strip(),
+                            'ip': ip.strip()
                         })
         except FileNotFoundError:
             print(f"[WARNING] Devices file not found: {config_path}")
@@ -90,16 +86,62 @@ class ConfigManager:
         
         return devices
     
-    def add_device(self, ip, mac):
-        """Ajoute un nouvel appareil"""
-        # Ajouter à la liste en mémoire
-        self.devices.append({'ip': ip, 'mac': mac})
+    def add_user(self, username, password):
+        """Ajoute un nouvel utilisateur"""
+        if username in self.users_config:
+            return False, "L'utilisateur existe déjà"
         
-        # Persister dans le fichier
+        if not username or not password or len(username) < 3:
+            return False, "Username invalide (minimum 3 caractères)"
+        
+        self.users_config[username] = password
+        
+        config_path = os.path.join(CONFIG_DIR, "users.conf")
+        try:
+            with open(config_path, 'a', encoding='utf-8') as f:
+                f.write(f"{username}:{password}\n")
+            return True, f"Utilisateur '{username}' créé avec succès"
+        except Exception as e:
+            del self.users_config[username]
+            return False, f"Erreur: {str(e)}"
+    
+    def delete_user(self, username):
+        """Supprime un utilisateur"""
+        if username not in self.users_config:
+            return False, "L'utilisateur n'existe pas"
+        
+        del self.users_config[username]
+        
+        config_path = os.path.join(CONFIG_DIR, "users.conf")
+        try:
+            with open(config_path, 'w', encoding='utf-8') as f:
+                f.write("# Configuration des utilisateurs\n")
+                f.write("# Format: username:password\n\n")
+                for user, pwd in self.users_config.items():
+                    f.write(f"{user}:{pwd}\n")
+            return True, f"Utilisateur '{username}' supprimé avec succès"
+        except Exception as e:
+            self.users_config[username] = ""
+            return False, f"Erreur: {str(e)}"
+    
+    def add_device(self, mac, ip):
+        """Ajoute un nouvel appareil (MAC|IP)"""
+        mac = mac.upper()
+        mac_parts = mac.split(':')
+        if len(mac_parts) != 6:
+            return False
+        
+        try:
+            ip_parts = ip.split('.')
+            if len(ip_parts) != 4 or not all(0 <= int(p) <= 255 for p in ip_parts):
+                return False
+        except ValueError:
+            return False
+        
         config_path = os.path.join(CONFIG_DIR, "devices.conf")
         try:
             with open(config_path, 'a', encoding='utf-8') as f:
-                f.write(f"{ip}|{mac}\n")
+                f.write(f"{mac}|{ip}\n")
             return True
         except Exception as e:
             print(f"[ERROR] Error adding device: {e}")
@@ -126,6 +168,7 @@ class ConfigManager:
     def validate_user(self, username, password):
         """Valide les credentials d'un utilisateur"""
         return self.users_config.get(username) == password
+
 
 # Instance globale
 config_manager = ConfigManager()
@@ -154,11 +197,18 @@ def validate_credentials(username, password):
     """Valide les credentials"""
     return config_manager.validate_user(username, password)
 
-def add_device(ip, mac):
-    """Ajoute un nouvel appareil (IP et adresse MAC)"""
-    return config_manager.add_device(ip, mac)
+def add_user(username, password):
+    """Ajoute un nouvel utilisateur"""
+    return config_manager.add_user(username, password)
+
+def delete_user(username):
+    """Supprime un utilisateur"""
+    return config_manager.delete_user(username)
+
+def add_device(mac, ip):
+    """Ajoute un nouvel appareil (MAC et adresse IP)"""
+    return config_manager.add_device(mac, ip)
 
 def get_devices():
     """Récupère tous les appareils"""
     return config_manager.get_devices()
-

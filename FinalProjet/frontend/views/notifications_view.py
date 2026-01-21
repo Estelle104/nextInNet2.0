@@ -10,7 +10,10 @@ import threading
 import os
 from datetime import datetime
 
-NOTIFICATIONS_FILE = "/home/andry/Documents/Fianarana/S3/Reseaux/ReseauGit/nextInNet2.0/FinalProjet/backend/logs/notifications.log"
+# Déterminer le chemin du fichier notifications
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.join(os.path.dirname(CURRENT_DIR), "..", "backend")
+NOTIFICATIONS_FILE = os.path.join(BACKEND_DIR, "logs", "notifications.log")
 
 class NotificationsView(tk.Frame):
     def __init__(self, parent):

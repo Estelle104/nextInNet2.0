@@ -158,43 +158,52 @@ class LogsView(tk.Frame):
         inactive_button.config(bg=SECONDARY, relief="raised", font=("Arial", 10))
 
     def fetch_logs(self, log_type):
-        """Récupère les logs en utilisant le script bash socket_client"""
+        """Récupère les logs depuis les fichiers"""
         try:
-            # Chemin du script bash
-            script_path = os.path.join(
+            # Chemins des fichiers de logs
+            logs_dir = os.path.join(
                 os.path.dirname(__file__),
                 "..",
                 "..",
                 "backend",
-                "scripts",
-                "socket_client.sh"
+                "logs"
             )
             
-            # Vérifier si le script existe
-            if not os.path.exists(script_path):
-                return [f"[ERROR] Script socket_client.sh non trouvé"]
+            # Chercher les fichiers de logs disponibles
+            all_logs = []
             
-            # Rendre le script exécutable
-            os.chmod(script_path, 0o755)
+            # Ajouter les logs TCP (Connexion.log) - Principal
+            connection_log_file = os.path.join(logs_dir, "Connexion.log")
+            if os.path.exists(connection_log_file):
+                try:
+                    with open(connection_log_file, 'r') as f:
+                        all_logs.extend(f.readlines())
+                except:
+                    pass
             
-            # Exécuter le script bash avec les paramètres
-            result = subprocess.run(
-                [script_path, "127.0.0.1", "5050", log_type, "10"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            # Ajouter les logs DHCP (dhcp.log) - Secondaire
+            dhcp_log_file = os.path.join(logs_dir, "dhcp.log")
+            if os.path.exists(dhcp_log_file):
+                try:
+                    with open(dhcp_log_file, 'r') as f:
+                        all_logs.extend(f.readlines())
+                except:
+                    pass
             
-            # Retourner le résultat
-            if result.returncode == 0 and result.stdout:
-                return result.stdout.splitlines()
-            elif not result.stdout and result.returncode == 0:
-                return ["[INFO] Aucun log disponible"]
-            else:
-                return [f"[ERROR] Erreur serveur"]
-                
-        except subprocess.TimeoutExpired:
-            return [f"[ERROR] Timeout connexion serveur (5s)"]
+            if not all_logs:
+                return ["[INFO] Aucun log disponible\n"]
+            
+            # Trier les logs par timestamp
+            all_logs = sorted(set([line.strip() for line in all_logs if line.strip()]))
+            
+            # Retourner les logs
+            if log_type == "realtime":
+                # Les 20 derniers logs
+                return all_logs[-20:] if len(all_logs) > 20 else all_logs
+            else:  # history
+                # Tous les logs
+                return all_logs
+                    
         except Exception as e:
             return [f"[ERROR] {str(e)}"]
 
@@ -202,13 +211,11 @@ class LogsView(tk.Frame):
         """Détermine la couleur basée sur le contenu du log"""
         log_upper = log_line.upper()
         
-        if "[CONNECTION]" in log_upper:
-            return "connection"
-        elif "[SUCCESS]" in log_upper or "STARTED" in log_upper:
+        if "[SUCCESS]" in log_upper or "STARTED" in log_upper or "✓" in log_line:
             return "success"
-        elif "[ERROR]" in log_upper or "FAILED" in log_upper:
+        elif "[ERROR]" in log_upper or "FAILED" in log_upper or "✗" in log_line:
             return "error"
-        elif "[WARNING]" in log_upper or "WARN" in log_upper:
+        elif "[WARNING]" in log_upper or "⚠️" in log_line:
             return "warning"
         elif "[INFO]" in log_upper:
             return "info"
@@ -216,6 +223,8 @@ class LogsView(tk.Frame):
             return "test"
         elif "[SERVER]" in log_upper or "[REQUEST]" in log_upper:
             return "server"
+        elif "[CONNECTION]" in log_upper or "[REMOTE CONNECTION]" in log_upper:
+            return "connection"
         else:
             return "normal"
 
@@ -224,45 +233,13 @@ class LogsView(tk.Frame):
         self.log_display.config(state="normal")
         self.log_display.delete("1.0", "end")
         
-        # Séparer les logs locaux et distants
-        local_logs = []
-        remote_logs = []
-        
-        for log in logs:
-            if "127.0.0.1" in log or "localhost" in log:
-                local_logs.append(log)
-            else:
-                remote_logs.append(log)
-        
-        # Afficher d'abord les logs distants (importants)
-        if remote_logs:
-            self.log_display.insert("end", "═" * 80 + "\n", "server")
-            self.log_display.insert("end", "🌐 CONNEXIONS DISTANTES\n", "server")
-            self.log_display.insert("end", "═" * 80 + "\n\n", "server")
-            
-            for log in remote_logs:
+        if not logs:
+            self.log_display.insert("end", "[INFO] En attente de connexions...\n", "info")
+        else:
+            # Afficher tous les logs
+            for log in logs:
                 tag = self.get_tag_for_log(log)
                 self.log_display.insert("end", log + "\n", tag)
-            
-            self.log_display.insert("end", "\n", "normal")
-        
-        # Afficher les logs locaux (GUI)
-        if log_type == "history" and local_logs:
-            self.log_display.insert("end", "─" * 80 + "\n", "info")
-            self.log_display.insert("end", f"ℹ️  LOGS LOCAUX (GUI) - {len(local_logs)} entrée(s)\n", "info")
-            self.log_display.insert("end", "─" * 80 + "\n\n", "info")
-            
-            for log in local_logs[-10:]:  # Afficher seulement les 10 derniers
-                tag = self.get_tag_for_log(log)
-                self.log_display.insert("end", log + "\n", tag)
-        
-        # Si pas de logs distants
-        if not remote_logs:
-            self.log_display.insert("end", "[INFO] En attente de connexions distantes...\n", "info")
-            self.log_display.insert("end", "[INFO] Les connexions locales (127.0.0.1) ne sont pas affichées\n", "warning")
-            
-            if local_logs:
-                self.log_display.insert("end", f"[INFO] {len(local_logs)} connexion(s) locale(s) détectée(s)\n", "warning")
 
         self.log_display.config(state="disabled")
         
@@ -270,14 +247,7 @@ class LogsView(tk.Frame):
         self.log_display.see("end")
         
         # Mettre à jour la barre de statut
-        remote_count = len(remote_logs)
-        local_count = len(local_logs)
-        status_text = f"🌐 {remote_count} distant(s)"
-        
-        if log_type == "history":
-            status_text += f" | ℹ️ {local_count} local(ux)"
-        
-        status_text += f" | Mode: {'Temps réel 🔄' if log_type == 'realtime' else 'Historique 📚'}"
+        status_text = f"📊 {len(logs)} log(s) | Mode: {'Temps réel 🔄' if log_type == 'realtime' else 'Historique 📚'}"
         
         if self.auto_refresh_enabled and log_type == "realtime":
             status_text += f" | Auto-refresh: ON (2s)"

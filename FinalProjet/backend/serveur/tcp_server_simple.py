@@ -9,14 +9,16 @@ import socket
 import threading
 import os
 import time
+import subprocess
 from datetime import datetime
 from collections import defaultdict
 
 PORT = 5050
-LOG_FILE = "/home/andry/Documents/Fianarana/S3/Reseaux/ReseauGit/nextInNet2.0/FinalProjet/backend/logs/Connexion.log"
-DEVICES_FILE = "/home/andry/Documents/Fianarana/S3/Reseaux/ReseauGit/nextInNet2.0/FinalProjet/backend/config/devices.conf"
-NOTIFICATIONS_FILE = "/home/andry/Documents/Fianarana/S3/Reseaux/ReseauGit/nextInNet2.0/FinalProjet/backend/logs/notifications.log"
-BLOCKED_IPS_FILE = "/home/andry/Documents/Fianarana/S3/Reseaux/ReseauGit/nextInNet2.0/FinalProjet/backend/config/blocked_ips.conf"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOG_FILE = os.path.join(BASE_DIR, "logs", "Connexion.log")
+DEVICES_FILE = os.path.join(BASE_DIR, "config", "devices.conf")
+NOTIFICATIONS_FILE = os.path.join(BASE_DIR, "logs", "notifications.log")
+BLOCKED_IPS_FILE = os.path.join(BASE_DIR, "config", "blocked_ips.conf")
 
 # Tracking des connexions inconnues (IP -> timestamp de connexion)
 unknown_connections = {}
@@ -76,14 +78,39 @@ def is_device_known(ip, mac=None):
     return any(ip == expected_ip for expected_ip in devices.values())
 
 def block_ip(ip):
-    """Ajoute une IP à la liste des bloquées"""
+    """Ajoute une IP à la liste des bloquées et bloque avec iptables"""
     global blocked_ips
     blocked_ips.add(ip)
     try:
         with open(BLOCKED_IPS_FILE, 'a') as f:
             f.write(f"{ip}\n")
+        print(f"✓ IP {ip} ajoutée à blocked_ips.conf")
     except Exception as e:
         print(f"✗ Erreur blocage IP: {e}")
+    
+    # ✅ NOUVEAU: Bloquer avec iptables (expulsion réelle du réseau)
+    try:
+        # Bloquer les entrées (INPUT)
+        subprocess.run(
+            ["sudo", "iptables", "-I", "INPUT", "-s", ip, "-j", "DROP"],
+            check=False,
+            capture_output=True
+        )
+        # Bloquer le forwarding (FORWARD)
+        subprocess.run(
+            ["sudo", "iptables", "-I", "FORWARD", "-s", ip, "-j", "DROP"],
+            check=False,
+            capture_output=True
+        )
+        print(f"✓ iptables: IP {ip} bloquée (expulsion réseau)")
+    except Exception as e:
+        print(f"⚠️ iptables non disponible ou erreur: {e}")
+
+def detect_is_device_authorized(ip):
+    """Vérifie si l'IP est autorisée (dans devices.conf)"""
+    devices = load_devices()
+    authorized_ips = set(devices.values())
+    return ip in authorized_ips
 
 def create_notification(notification_type, message):
     """Crée une notification (WARNING, BLOCKED, etc)"""
@@ -133,54 +160,78 @@ def get_logs_from_file(log_type, limit=10):
         return f"[ERROR] {e}\n"
 
 def check_and_handle_unknown(ip, port, request):
-    """Vérifie si la machine est inconnue et applique les règles"""
+    """
+    Vérifie si la machine est autorisée ou inconnue et applique les règles:
+    - AUTORISÉE (dans devices.conf) → SSH OK, juste log
+    - INCONNUE (IP dynamique 150-200) → SSH = BLOQUÉE + EXPULSÉE
+    - BLOQUÉE (dans blocked_ips.conf) → Refusée
+    """
     is_local = ip == "127.0.0.1" or ip == "localhost"
     
     if is_local:
-        return ("AUTHORIZED", 0)  # (status, time_allowed)
+        return ("AUTHORIZED", 0)
     
     # Vérifier si IP est bloquée
     blocked_ips_list = load_blocked_ips()
     if ip in blocked_ips_list:
-        log_to_file(f"[BLOCKED] Tentative connexion d'une IP bloquée: {ip}:{port}", "BLOCKED")
-        create_notification("BLOCKED", f"IP bloquée {ip} refusée")
+        log_to_file(f"SSH refusée - IP bloquée {ip}:{port}", "INFO")
+        create_notification("BLOCKED", f"🚫 IP bloquée {ip} refusée")
         return ("BLOCKED", 0)
     
-    # Vérifier si c'est une machine connue
-    if not is_device_known(ip):
-        # Machine inconnue détectée
+    # Vérifier si c'est une machine AUTORISÉE (dans devices.conf)
+    is_authorized = detect_is_device_authorized(ip)
+    
+    if is_authorized:
+        # ✅ Machine autorisée
+        # SSH est OK, juste enregistrer
+        if "ssh" in request.lower() or port == 22 or request.startswith("22"):
+            log_to_file(f"✓ SSH accepté depuis machine autorisée: {ip}:{port}", "INFO")
+            create_notification("INFO", f"✓ SSH autorisé depuis {ip} (machine connue)")
+        else:
+            log_to_file(f"✓ Connexion établie - Machine autorisée: {ip}:{port}", "INFO")
+        
+        # Réinitialiser tracking inconnue si présente
+        if ip in unknown_connections:
+            del unknown_connections[ip]
+        
+        return ("AUTHORIZED", 0)
+    
+    # ❌ Machine INCONNUE (IP dynamique 150-200)
+    else:
         if ip not in unknown_connections:
             # Première connexion de cette IP inconnue
             unknown_connections[ip] = time.time()
-            log_to_file(f"[UNKNOWN] Machine INCONNUE connectée: {ip}:{port}", "UNKNOWN")
-            create_notification("WARNING", f"🔴 MACHINE INCONNUE DÉTECTÉE: {ip}:{port}")
+            log_to_file(f"⚠️ MACHINE INCONNUE DÉTECTÉE: {ip}:{port} (30s avant déconnexion)", "WARNING")
+            create_notification("WARNING", f"⚠️ MACHINE INCONNUE DÉTECTÉE: {ip}:{port}")
         
-        # Vérifier si elle essaie SSH (port 22) ou autres tentatives suspectes
-        if "ssh" in request.lower() or request.startswith("22"):
-            log_to_file(f"[ATTACK] Tentative SSH/port22 depuis: {ip}:{port}", "BLOCKED")
-            create_notification("BLOCKED", f"🚫 ATTAQUE SSH DEPUIS {ip} - BLOQUÉE IMMÉDIATEMENT")
-            block_ip(ip)
+        # ✅ NOUVEAU: Détecter SSH sur inconnue = BLOQUER + EXPULSER
+        is_ssh_attempt = (
+            "ssh" in request.lower() or 
+            port == 22 or 
+            request.startswith("22") or
+            "SSH" in request or
+            "OpenSSH" in request
+        )
+        
+        if is_ssh_attempt:
+            log_to_file(f"🚫 TENTATIVE SSH MACHINE INCONNUE BLOQUÉE: {ip}:{port} - EXPULSÉE!", "ERROR")
+            create_notification("BLOCKED", f"🚫 TENTATIVE SSH MACHINE INCONNUE: {ip} - BLOQUÉE & EXPULSÉE!")
+            block_ip(ip)  # Bloque avec iptables + ajout blocked_ips.conf
             return ("BLOCKED", 0)
         
-        # Calculer le temps restant avant timeout
+        # Calculer le temps restant avant timeout (toujours 30s pour inconnues)
         time_since_connection = time.time() - unknown_connections[ip]
         time_remaining = TIMEOUT_UNKNOWN - time_since_connection
         
         if time_remaining <= 0:
-            # Timeout dépassé - déconnecter
-            log_to_file(f"[TIMEOUT] Machine inconnue DÉCONNECTÉE (timeout 30s): {ip}:{port}", "UNKNOWN")
-            create_notification("TIMEOUT", f"⏱️ DÉCONNEXION: Machine inconnue {ip} supprimée après 30 secondes")
+            log_to_file(f"MACHINE INCONNUE EXPULSÉE - Timeout: {ip}:{port}", "WARNING")
+            create_notification("TIMEOUT", f"⏱️ DÉCONNEXION: Machine inconnue {ip} expulsée (timeout)")
             del unknown_connections[ip]
             return ("TIMEOUT", 0)
         
-        # Retourner le statut UNKNOWN pour laisser se connecter mais tracker
+        # Machine inconnue acceptée (temporairement), mais tracking actif
         return ("UNKNOWN", time_remaining)
-    
-    # Machine connue, réinitialiser le compte
-    if ip in unknown_connections:
-        del unknown_connections[ip]
-    
-    return ("AUTHORIZED", 0)
+
 
 def handle_client(client_socket, client_address):
     """Traite chaque client qui se connecte"""
@@ -199,11 +250,13 @@ def handle_client(client_socket, client_address):
         
         # Traiter selon le status
         if status == "BLOCKED":
+            log_to_file(f"Connexion refusée - Machine bloquée: {ip}:{port}", "ERROR")
             client_socket.send("[ERROR] Acces refuse - Machine bloquee\n".encode('utf-8'))
             client_socket.close()
             return
         
         elif status == "TIMEOUT":
+            log_to_file(f"Connexion expirée - Timeout: {ip}:{port}", "WARNING")
             client_socket.send("[ERROR] Timeout - Connexion expiree (1 minute)\n".encode('utf-8'))
             client_socket.close()
             return
@@ -211,16 +264,17 @@ def handle_client(client_socket, client_address):
         elif status == "UNKNOWN":
             # Machine inconnue - accepter mais afficher le temps restant
             is_local = ip == "127.0.0.1" or ip == "localhost"
-            log_to_file(f"[UNKNOWN] Connexion acceptée temporairement (⏱️ {int(time_remaining)}s avant déconnexion)", "UNKNOWN")
+            if not is_local:
+                log_to_file(f"[UNKNOWN] Machine inconnue connectée ({int(time_remaining)}s timeout): {ip}:{port}", "WARNING")
         
         # ✅ ENREGISTRER la connexion (même locale)
         is_local = ip == "127.0.0.1" or ip == "localhost"
         
         if not is_local:
-            log_to_file(f"[CONNECTION] Client from {ip}:{port}", "INFO")
+            log_to_file(f"Connexion établie: {ip}:{port}", "INFO")
             print(f"[REMOTE CONNECTION] {ip}:{port}")
         else:
-            log_to_file(f"[CONNECTION] Client from {ip}:{port}", "INFO")
+            log_to_file(f"Connexion locale: {ip}:{port}", "INFO")
         
         if not is_local:
             print(f"Request from {ip}: {request}")
@@ -243,6 +297,8 @@ def handle_client(client_socket, client_address):
         
     except Exception as e:
         print(f"✗ Erreur client: {e}")
+        ip = client_address[0] if client_address else "unknown"
+        log_to_file(f"Erreur connexion: {ip} - {str(e)[:50]}", "ERROR")
     finally:
         client_socket.close()
 
@@ -251,7 +307,7 @@ def start_server():
     ensure_log_file()
     
     # Ajouter des logs d'initialisation
-    log_to_file("[SERVER] Starting server...")
+    log_to_file("Serveur démarré")
     
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -261,7 +317,7 @@ def start_server():
         server.listen(5)
         print(f"✓ Serveur démarré sur 0.0.0.0:{PORT}")
         print(f"✓ Logs: {LOG_FILE}")
-        log_to_file("[SERVER] Server started successfully")
+        log_to_file("Serveur prêt à accepter les connexions")
         
         while True:
             try:
@@ -275,7 +331,7 @@ def start_server():
                 thread.start()
             except KeyboardInterrupt:
                 print("\n✓ Arrêt du serveur...")
-                log_to_file("[SERVER] Server stopped")
+                log_to_file("Serveur arrêté")
                 break
             except Exception as e:
                 print(f"✗ Erreur: {e}")

@@ -11,7 +11,9 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-PROJECTDIR="/home/andry/Documents/Fianarana/S3/Reseaux/ReseauGit/nextInNet2.0/FinalProjet"
+# Déterminer le répertoire courant du script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECTDIR="$SCRIPT_DIR"
 BACKEND="$PROJECTDIR/backend"
 
 # Vérification configuration
@@ -30,7 +32,7 @@ echo -e "${YELLOW}Arrêt temporaire NetworkManager et wpa_supplicant...${NC}"
 systemctl stop NetworkManager || true
 systemctl stop wpa_supplicant || true
 
-# Configuration IP de l’AP
+# Configuration IP de l'AP
 echo -e "${YELLOW}Configuration IP sur $WIFI_IFACE...${NC}"
 ip link set "$WIFI_IFACE" down || true
 ip addr flush dev "$WIFI_IFACE"
@@ -54,25 +56,57 @@ cd "$BACKEND"
 sudo python3 serveur/dhcp_server.py "$WIFI_IFACE" > logs/dhcp.log 2>&1 &
 DHCP_PID=$!
 
+# Attendre que DHCP soit prêt
+sleep 2
+
 # Lancer TCP
 echo -e "${YELLOW}Lancement TCP...${NC}"
-python3 serveur/tcp_server_simple.py > logs/tcp.log 2>&1 &
+sudo python3 serveur/tcp_server_simple.py > logs/tcp.log 2>&1 &
 TCP_PID=$!
 
-# Nettoyage à l’arrêt
+# Attendre que TCP soit prêt
+sleep 2
+
+# Lancer hostapd en arrière-plan
+echo -e "${YELLOW}Lancement du WiFi AP...${NC}"
+hostapd "$HOSTAPD_CONF" > logs/hostapd.log 2>&1 &
+HOSTAPD_PID=$!
+
+# Attendre que hostapd soit prêt
+sleep 3
+
+# Nettoyage à l'arrêt
 trap "
 echo '';
 echo 'Arrêt du système...';
-kill $DHCP_PID $TCP_PID 2>/dev/null;
-pkill hostapd 2>/dev/null;
+kill \$DHCP_PID \$TCP_PID \$HOSTAPD_PID 2>/dev/null || true;
+pkill hostapd 2>/dev/null || true;
 iptables -F;
 iptables -t nat -F;
 systemctl start NetworkManager;
 exit 0
 " INT TERM
 
-# Lancer hostapd en avant-plan
-echo -e "${GREEN}📡 WiFi AP lancé : NextInNet-Secure${NC}"
-echo -e "${GREEN}🔒 Mot de passe : SecureNetwork123${NC}"
+# Afficher l'état du système
+echo -e "${GREEN}========================================${NC}"
+echo -e "${GREEN}✓ SYSTÈME DÉMARRÉ AVEC SUCCÈS${NC}"
+echo -e "${GREEN}========================================${NC}"
 echo ""
-hostapd "$HOSTAPD_CONF"
+echo -e "${GREEN}📡 WiFi AP : ${YELLOW}NextInNet-Secure${NC}"
+echo -e "${GREEN}🔒 Mot de passe : ${YELLOW}SecureNetwork123${NC}"
+echo -e "${GREEN}🌐 IP du serveur : ${YELLOW}192.168.43.1${NC}"
+echo -e "${GREEN}⚙️  DHCP en cours (PID: $DHCP_PID)${NC}"
+echo -e "${GREEN}🔗 TCP Serveur (PID: $TCP_PID)${NC}"
+echo -e "${GREEN}📡 hostapd (PID: $HOSTAPD_PID)${NC}"
+echo ""
+echo -e "${YELLOW}Démarrage du client GUI...${NC}"
+echo ""
+
+# Lancer le client GUI
+cd "$PROJECTDIR"
+python3 backend/client/client.py
+
+# Attendre que l'utilisateur ferme l'interface
+echo -e "${YELLOW}Client GUI fermé. Arrêt du système...${NC}"
+kill $DHCP_PID $TCP_PID $HOSTAPD_PID 2>/dev/null || true
+pkill hostapd 2>/dev/null || true

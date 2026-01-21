@@ -1,0 +1,22 @@
+Line 45: DEPRECATED: 'dump_file' configuration variable is not used anymore
+wlo1: interface state UNINITIALIZED->COUNTRY_UPDATE
+wlo1: interface state COUNTRY_UPDATE->ENABLED
+wlo1: AP-ENABLED 
+wlo1: STA 88:9f:fa:22:70:5a IEEE 802.11: authenticated
+wlo1: STA 88:9f:fa:22:70:5a IEEE 802.11: associated (aid 1)
+wlo1: AP-STA-CONNECTED 88:9f:fa:22:70:5a
+wlo1: STA 88:9f:fa:22:70:5a RADIUS: starting accounting session BF76E81D4992A328
+wlo1: STA 88:9f:fa:22:70:5a WPA: pairwise key handshake completed (RSN)
+wlo1: EAPOL-4WAY-HS-COMPLETED 88:9f:fa:22:70:5a
+wlo1: STA 70:dd:a8:68:b9:06 IEEE 802.11: authenticated
+wlo1: STA 70:dd:a8:68:b9:06 IEEE 802.11: associated (aid 2)
+wlo1: AP-STA-CONNECTED 70:dd:a8:68:b9:06
+wlo1: STA 70:dd:a8:68:b9:06 RADIUS: starting accounting session A9DED38EC35F9AB7
+wlo1: STA 70:dd:a8:68:b9:06 WPA: pairwise key handshake completed (RSN)
+wlo1: EAPOL-4WAY-HS-COMPLETED 70:dd:a8:68:b9:06
+wlo1: interface state ENABLED->DISABLED
+wlo1: AP-STA-DISCONNECTED 70:dd:a8:68:b9:06
+wlo1: AP-STA-DISCONNECTED 88:9f:fa:22:70:5a
+wlo1: AP-DISABLED 
+wlo1: CTRL-EVENT-TERMINATING 
+nl80211: deinit ifname=wlo1 disabled_11b_rates=0

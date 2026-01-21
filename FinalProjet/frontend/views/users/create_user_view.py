@@ -102,8 +102,8 @@ class CreateUserView(tk.Frame):
             messagebox.showerror("Error", "Invalid MAC format (e.g., AA:BB:CC:DD:EE:FF)")
             return
         
-        # Ajouter le device
-        if add_device(ip, mac):
+        # Ajouter le device (MAC, IP)
+        if add_device(mac, ip):
             messagebox.showinfo("Success", f"Device added:\nIP: {ip}\nMAC: {mac}")
             self.ip_entry.delete(0, tk.END)
             self.ip_entry.insert(0, "192.168.1.")

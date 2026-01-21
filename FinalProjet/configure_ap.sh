@@ -60,17 +60,51 @@ mkdir -p "$CONF_DIR"
 HOSTAPD_CONF="$CONF_DIR/hostapd_${WIFI_IFACE}.conf"
 
 cat > "$HOSTAPD_CONF" <<EOF
+# Interface et driver
 interface=$WIFI_IFACE
 driver=nl80211
+
+# SSID et sécurité
 ssid=NextInNet-Secure
 hw_mode=g
 channel=6
+country_code=FR
+
+# Mode 802.11
+ieee80211n=1
+ht_capab=[HT40][SHORT-GI-20][SHORT-GI-40]
+
+# Paramètres DTIM et beacon
+beacon_int=100
+dtim_period=2
+
+# Options de compatibilité
 wmm_enabled=1
+wmm_ac_bk_cwmin=4
+wmm_ac_bk_cwmax=10
+wmm_ac_bk_aifs=7
+wmm_ac_bk_txop_limit=0
+wmm_ac_be_aifs=3
+
+# WPA2 seulement
 auth_algs=1
 wpa=2
 wpa_passphrase=SecureNetwork123
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=CCMP
+wpa_group_rekey=3600
+wpa_strict_rekey=1
+wpa_gmk_rekey=86400
+
+# Logging
+logger_syslog=-1
+logger_syslog_level=2
+logger_stdout=-1
+logger_stdout_level=2
+
+# Debug
+debug=2
+dump_file=/tmp/hostapd.dump
 EOF
 
 echo -e "${GREEN}✓ Fichier hostapd créé : $HOSTAPD_CONF${NC}"
