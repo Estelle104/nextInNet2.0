@@ -1,0 +1,22 @@
+Machine inconnue (IP/MAC non dans devices.conf) se connecte
+    ↓
+📝 Log enregistré avec niveau "WARNING" (affichage en orange)
+📝 Notification générée
+⏱️ Timeout commencé (1 minute)
+    ↓
+SI elle essaie SSH:
+    🚫 Bloquée immédiatement
+    📝 Notification "BLOCKED"
+    IP ajoutée à blocked_ips.conf
+    ✗ Accès refusé
+SINON:
+    ✓ Autorisée mais surveillée
+    ⏱️ Après 1 minute → déconnexion
+    📝 Notification "TIMEOUT"
+    
+SI l'admin enregistre son IP/MAC dans devices.conf:
+    ✓ Accès rétabli normalement
+    ✓ Reconnexion autorisée
+
+
+    

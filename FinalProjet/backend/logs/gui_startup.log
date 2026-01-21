@@ -1,0 +1,16 @@
+Exception in thread Thread-20 (auto_refresh_loop):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/andry/Documents/Fianarana/S3/Reseaux/ReseauGit/nextInNet2.0/FinalProjet/frontend/views/notifications_view.py", line 169, in auto_refresh_loop
+    while self.auto_refresh.get():
+          ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/tkinter/__init__.py", line 643, in get
+    return self._tk.getboolean(self._tk.globalgetvar(self._name))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: main thread is not in main loop
+bgerror failed to handle background error.
+    Original error: invalid command name "129095360036416_fetch_realtime_async"
+    Error in bgerror: can't invoke "tk" command: application has been destroyed

@@ -1,0 +1,58 @@
+cat << 'EOF'
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                      ✅ NETTOYAGE COMPLÉTÉ - PROJET OPTIMISÉ                   ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+🗑️  FICHIERS SUPPRIMÉS:
+════════════════════════
+
+  ❌ backend/serveur/log_server.py              (ancien serveur SANS sécurité)
+  ❌ test_security.sh                          (ancien script de test)
+  ❌ test_security_python.py                   (ancien test Python)
+  ❌ test_security_realiste.py                 (ancien test réaliste)
+  ❌ test_understand.py                        (ancien test d'explication)
+  ❌ frontend/views/v_notif.py                 (ancienne vue notifications)
+  ❌ frontend/views/v_notification.py          (ancienne vue notifications)
+  ❌ frontend/views/notif_view.py              (doublon de notifications_view)
+
+════════════════════════════════════════════════════════════════════════════════
+
+✅ FICHIERS ACTIFS À UTILISER:
+═════════════════════════════════
+
+  🖥️  Serveur:
+      ✓ backend/serveur/tcp_server_simple.py  → Lance avec:
+                                                 python3 backend/serveur/tcp_server_simple.py
+
+  🎨 Vues:
+      ✓ frontend/views/logs_view.py           → Affichage des logs
+      ✓ frontend/views/notifications_view.py  → Affichage des alertes
+      ✓ frontend/views/list_user_view.py      → Gestion utilisateurs
+
+  📋 Configuration:
+      ✓ backend/config/devices.conf           → Machines autorisées (IP|MAC)
+      ✓ backend/config/blocked_ips.conf       → IPs bloquées
+      ✓ backend/config/users.conf             → Utilisateurs
+
+  📝 Logs:
+      ✓ backend/logs/Connexion.log            → Logs des connexions
+      ✓ backend/logs/notifications.log        → Alertes de sécurité
+
+════════════════════════════════════════════════════════════════════════════════
+
+🚀 POUR DÉMARRER:
+═════════════════
+
+  Terminal 1 (Serveur):
+    $ python3 backend/serveur/tcp_server_simple.py
+
+  Terminal 2 (GUI):
+    $ python3 backend/client/client.py
+
+  Terminal 3 (Test depuis une autre machine):
+    $ echo 'realtime 5' | nc 192.168.43.29 5050
+
+════════════════════════════════════════════════════════════════════════════════
+
+EOF

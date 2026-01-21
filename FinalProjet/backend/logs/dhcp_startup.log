@@ -1,0 +1,125 @@
+[2026-01-20 14:29:34] Interface réseau fournie: 5
+[2026-01-20 14:29:34] Démarrage du serveur DHCP sur l'interface: 5
+[2026-01-20 14:29:34] ⚠️ Attention: Impossible de binder à l'interface 5: [Errno 19] No such device
+[2026-01-20 14:29:34] 🚀 Serveur DHCP démarré sur port 67
+[2026-01-20 14:29:34]    Interface: 5
+[2026-01-20 14:29:34]    Réseau: 192.168.43.0/255.255.255.0
+[2026-01-20 14:29:34]    Gateway: 192.168.43.1
+[2026-01-20 14:29:34]    Pool: 192.168.43.100-200
+[2026-01-20 14:29:43] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:29:43] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:29:44] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:29:44] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:29:46] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:29:46] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:29:50] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:29:50] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:29:59] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:29:59] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:02] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:02] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:03] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:03] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:06] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:06] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:07] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:07] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:07] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:30:07] ✗ MAC non autorisée: 1C:BF:CE:F1:F1:12
+[2026-01-20 14:30:09] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:09] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:10] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:30:10] ✗ MAC non autorisée: 1C:BF:CE:F1:F1:12
+[2026-01-20 14:30:13] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:13] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:15] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:30:15] ✗ MAC non autorisée: 1C:BF:CE:F1:F1:12
+[2026-01-20 14:30:21] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:21] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:23] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:30:23] ✗ MAC non autorisée: 1C:BF:CE:F1:F1:12
+[2026-01-20 14:30:40] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:30:40] ✗ MAC non autorisée: 1C:BF:CE:F1:F1:12
+[2026-01-20 14:30:44] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:44] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:45] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:45] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:47] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:47] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:51] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:51] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:59] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:30:59] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:03] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:03] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:04] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:04] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:06] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:06] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:10] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:10] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:18] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:18] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:31:19] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:31:19] ✗ MAC non autorisée: 1C:BF:CE:F1:F1:12
+[2026-01-20 14:31:24] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:31:24] ✗ MAC non autorisée: 1C:BF:CE:F1:F1:12
+[2026-01-20 14:31:32] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:31:32] ✗ MAC non autorisée: 1C:BF:CE:F1:F1:12
+[2026-01-20 14:32:02] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:32:02] ✗ MAC non autorisée: 1C:BF:CE:F1:F1:12
+[2026-01-20 14:35:40] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:35:40] ✓ Lease sauvegardé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:35:40] ✓ IP assignée: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:35:40] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:35:40] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:35:44] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:35:44] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:35:44] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:35:53] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:35:53] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:35:53] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:09] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:36:09] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:09] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:19] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:36:19] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:20] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:22] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:36:22] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:22] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:27] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:36:27] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:27] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:33] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:33] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:34] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:34] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:35] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:36:35] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:35] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:36] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:36] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:40] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:40] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:48] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:48] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:51] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:36:51] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:51] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:36:52] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:52] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:53] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:53] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:55] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:55] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:59] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:36:59] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:37:08] → DHCP Request de 4E:E0:B8:0F:09:78
+[2026-01-20 14:37:08] ✗ MAC non autorisée: 4E:E0:B8:0F:09:78
+[2026-01-20 14:37:19] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:37:19] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:37:19] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:37:21] → DHCP Request de 1C:BF:CE:F1:F1:12
+[2026-01-20 14:37:21] ✓ DHCP OFFER envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100
+[2026-01-20 14:37:21] ✓ DHCP ACK envoyé: 1C:BF:CE:F1:F1:12 -> 192.168.43.100

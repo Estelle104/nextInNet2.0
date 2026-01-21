@@ -1,3 +1,0 @@
- python3 serveur/dhcp_server.py
- python3 serveur/log_server.py
- python3 client/client_ui.py

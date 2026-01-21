@@ -1,0 +1,13 @@
+[2026-01-20 16:02:43] Interface réseau fournie: wlo1
+[2026-01-20 16:02:43] Démarrage du serveur DHCP sur l'interface: wlo1
+[2026-01-20 16:02:43] 🚀 Serveur DHCP démarré sur port 67
+[2026-01-20 16:02:43]    Interface: wlo1
+[2026-01-20 16:02:43]    Réseau: 192.168.43.0/255.255.255.0
+[2026-01-20 16:02:43]    Gateway: 192.168.43.1
+[2026-01-20 16:02:43]    Pool: 192.168.43.100-200
+[2026-01-21 11:58:36] Démarrage du serveur DHCP sur l'interface: wlo1
+[2026-01-21 11:58:36] 🚀 Serveur DHCP démarré sur port 67
+[2026-01-21 11:58:36]    Interface: wlo1
+[2026-01-21 11:58:36]    Réseau: 192.168.43.0/255.255.255.0
+[2026-01-21 11:58:36]    Gateway: 192.168.43.1
+[2026-01-21 11:58:36]    Pool: 192.168.43.100-200
