@@ -29,7 +29,8 @@ SUBNET_MASK = "255.255.255.0"
 GATEWAY = "192.168.43.1"  # Votre PC (point d'accès)
 DHCP_SERVER_IP = "192.168.43.1"
 DNS = "8.8.8.8"
-LEASE_TIME = 3600  # 1 heure
+LEASE_TIME = 3600  # 1 heure pour les machines autorisées
+LEASE_TIME_UNKNOWN = 20  # 20 secondes pour les machines inconnues (un peu plus que 15s d'expulsion)
 
 # Interface réseau (peut être modifiée par argument)
 NETWORK_INTERFACE = os.environ.get('NETWORK_INTERFACE', 'wlo1')
@@ -44,6 +45,7 @@ NOTIFICATIONS_FILE = os.path.join(BASE_DIR, "logs", "notifications.log")
 # Pool d'IPs
 IP_POOL_START = 100
 IP_POOL_END = 200
+# Pool dynamique pour inconnues: 150-200 (durée: 15 secondes avant expulsion)
 allocated_ips = {}  # {MAC: {"ip": "...", "expiration": datetime}}
 blocked_macs = set()
 
@@ -100,7 +102,7 @@ def save_lease(mac, ip, expiration):
 
 
 def find_free_dynamic_ip():
-    """Trouve une IP libre dans le pool dynamique (150-200)"""
+    """Trouve une IP libre dans le pool dynamique (150-200) pour les machines inconnues"""
     dynamic_start = 150
     dynamic_end = 200
     
@@ -180,12 +182,13 @@ def get_ip_for_mac(mac):
     else:
         dynamic_ip = find_free_dynamic_ip()
         if dynamic_ip:
-            expiration = datetime.now() + timedelta(seconds=LEASE_TIME)
+            # Lease court (20s) pour les inconnues qui seront expulsées à 15s
+            expiration = datetime.now() + timedelta(seconds=LEASE_TIME_UNKNOWN)
             allocated_ips[mac_upper] = {"ip": dynamic_ip, "expiration": expiration}
             save_lease(mac_upper, dynamic_ip, expiration)
             
             send_notification(mac_upper, dynamic_ip, False)
-            log(f"MAC={mac} IP={dynamic_ip} | Status: ⚠️ INCONNUE (pool dynamique) | Timeout: 30s", "CONNEXION")
+            log(f"MAC={mac} IP={dynamic_ip} | Status: ⚠️ INCONNUE (IP dynamique) | Expulsion après 15s | Lease: {LEASE_TIME_UNKNOWN}s", "CONNEXION")
             return dynamic_ip
         else:
             log(f"MAC={mac} | Status: ❌ POOL PLEIN", "CONNEXION")
@@ -240,7 +243,7 @@ def send_notification(mac, ip, is_authorized):
         log(f"✗ Erreur écriture notification: {e}")
 
 
-def build_dhcp_offer(transaction_id, client_mac, offered_ip, client_ip=None):
+def build_dhcp_offer(transaction_id, client_mac, offered_ip, client_ip=None, lease_time=LEASE_TIME):
     """Construit une réponse DHCP OFFER"""
     packet = bytearray(300)
     
@@ -283,19 +286,19 @@ def build_dhcp_offer(transaction_id, client_mac, offered_ip, client_ip=None):
     domain = b"nextinnet.local"
     options += bytes([15, len(domain)]) + domain
     
-    # Option 51: Lease Time (3600 secondes = 1 heure)
-    lease_bytes = struct.pack('!I', LEASE_TIME)
+    # Option 51: Lease Time
+    lease_bytes = struct.pack('!I', lease_time)
     options += bytes([51, 4]) + lease_bytes
     
     # Option 54: DHCP Server Identifier
     options += bytes([54, 4]) + format_ip(DHCP_SERVER_IP)
     
     # Option 58: Renewal Time (T1)
-    renewal_bytes = struct.pack('!I', LEASE_TIME // 2)
+    renewal_bytes = struct.pack('!I', lease_time // 2)
     options += bytes([58, 4]) + renewal_bytes
     
     # Option 59: Rebinding Time (T2)
-    rebinding_bytes = struct.pack('!I', int(LEASE_TIME * 0.875))
+    rebinding_bytes = struct.pack('!I', int(lease_time * 0.875))
     options += bytes([59, 4]) + rebinding_bytes
     
     # Option 255: End
@@ -306,7 +309,7 @@ def build_dhcp_offer(transaction_id, client_mac, offered_ip, client_ip=None):
     return bytes(packet[:options_pos+len(options)])
 
 
-def build_dhcp_ack(transaction_id, client_mac, assigned_ip, client_ip=None):
+def build_dhcp_ack(transaction_id, client_mac, assigned_ip, client_ip=None, lease_time=LEASE_TIME):
     """Construit une réponse DHCP ACK"""
     packet = bytearray(300)
     
@@ -350,18 +353,18 @@ def build_dhcp_ack(transaction_id, client_mac, assigned_ip, client_ip=None):
     options += bytes([15, len(domain)]) + domain
     
     # Option 51: Lease Time
-    lease_bytes = struct.pack('!I', LEASE_TIME)
+    lease_bytes = struct.pack('!I', lease_time)
     options += bytes([51, 4]) + lease_bytes
     
     # Option 54: DHCP Server Identifier
     options += bytes([54, 4]) + format_ip(DHCP_SERVER_IP)
     
     # Option 58: Renewal Time (T1)
-    renewal_bytes = struct.pack('!I', LEASE_TIME // 2)
+    renewal_bytes = struct.pack('!I', lease_time // 2)
     options += bytes([58, 4]) + renewal_bytes
     
     # Option 59: Rebinding Time (T2)
-    rebinding_bytes = struct.pack('!I', int(LEASE_TIME * 0.875))
+    rebinding_bytes = struct.pack('!I', int(lease_time * 0.875))
     options += bytes([59, 4]) + rebinding_bytes
     
     # Option 255: End
@@ -391,21 +394,26 @@ def handle_dhcp_request(data, client_addr, sock):
             log(f"✗ Impossible d'assigner IP pour {client_mac}")
             return
         
+        # Déterminer le lease_time selon si le client est autorisé ou inconnue
+        authorized_devices = load_authorized_devices()
+        is_authorized = client_mac.upper() in authorized_devices
+        lease_time = LEASE_TIME if is_authorized else LEASE_TIME_UNKNOWN
+        
         # Envoyer DHCP OFFER en BROADCAST (255.255.255.255:68)
         # Les clients DHCP écoutent sur le broadcast avant d'avoir une IP
-        offer = build_dhcp_offer(transaction_id, client_mac, offered_ip)
+        offer = build_dhcp_offer(transaction_id, client_mac, offered_ip, lease_time=lease_time)
         sock.sendto(offer, ("255.255.255.255", DHCP_CLIENT_PORT))
         
-        log(f"✓ DHCP OFFER envoyé (broadcast): {client_mac} -> {offered_ip}")
+        log(f"✓ DHCP OFFER envoyé (broadcast): {client_mac} -> {offered_ip} | Lease: {lease_time}s")
         
         # Attendre et traiter REQUEST (dans un vrai serveur DHCP)
         # Pour cet implémentation simple, on envoie directement ACK
         time.sleep(0.1)
         
-        ack = build_dhcp_ack(transaction_id, client_mac, offered_ip)
+        ack = build_dhcp_ack(transaction_id, client_mac, offered_ip, lease_time=lease_time)
         sock.sendto(ack, ("255.255.255.255", DHCP_CLIENT_PORT))
         
-        log(f"✓ DHCP ACK envoyé (broadcast): {client_mac} -> {offered_ip}")
+        log(f"✓ DHCP ACK envoyé (broadcast): {client_mac} -> {offered_ip} | Lease: {lease_time}s")
         
     except Exception as e:
         log(f"✗ Erreur traitement DHCP: {e}")

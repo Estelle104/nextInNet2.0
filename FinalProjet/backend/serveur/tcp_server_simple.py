@@ -23,7 +23,7 @@ BLOCKED_IPS_FILE = os.path.join(BASE_DIR, "config", "blocked_ips.conf")
 # Tracking des connexions inconnues (IP -> timestamp de connexion)
 unknown_connections = {}
 blocked_ips = set()
-TIMEOUT_UNKNOWN = 30  # 30 secondes avant de couper la connexion
+TIMEOUT_UNKNOWN = 15  # 15 secondes avant d'expulser du réseau
 
 def load_devices():
     """Charge la liste des appareils autorisés depuis devices.conf (MAC -> IP)"""
@@ -201,7 +201,7 @@ def check_and_handle_unknown(ip, port, request):
         if ip not in unknown_connections:
             # Première connexion de cette IP inconnue
             unknown_connections[ip] = time.time()
-            log_to_file(f"⚠️ MACHINE INCONNUE DÉTECTÉE: {ip}:{port} (30s avant déconnexion)", "WARNING")
+            log_to_file(f"⚠️ MACHINE INCONNUE DÉTECTÉE: {ip}:{port} (15s avant expulsion)", "WARNING")
             create_notification("WARNING", f"⚠️ MACHINE INCONNUE DÉTECTÉE: {ip}:{port}")
         
         # ✅ NOUVEAU: Détecter SSH sur inconnue = BLOQUER + EXPULSER
@@ -219,14 +219,18 @@ def check_and_handle_unknown(ip, port, request):
             block_ip(ip)  # Bloque avec iptables + ajout blocked_ips.conf
             return ("BLOCKED", 0)
         
-        # Calculer le temps restant avant timeout (toujours 30s pour inconnues)
+        # Calculer le temps restant avant timeout (15s pour inconnues)
         time_since_connection = time.time() - unknown_connections[ip]
         time_remaining = TIMEOUT_UNKNOWN - time_since_connection
         
         if time_remaining <= 0:
             log_to_file(f"MACHINE INCONNUE EXPULSÉE - Timeout: {ip}:{port}", "WARNING")
-            create_notification("TIMEOUT", f"⏱️ DÉCONNEXION: Machine inconnue {ip} expulsée (timeout)")
-            del unknown_connections[ip]
+            create_notification("TIMEOUT", f"⏱️ EXPULSION: Machine inconnue {ip} expulsée après 15s (timeout)")
+            
+            # Bloquer avec iptables
+            block_ip(ip)
+            if ip in unknown_connections:
+                del unknown_connections[ip]
             return ("TIMEOUT", 0)
         
         # Machine inconnue acceptée (temporairement), mais tracking actif
@@ -262,10 +266,10 @@ def handle_client(client_socket, client_address):
             return
         
         elif status == "UNKNOWN":
-            # Machine inconnue - accepter mais afficher le temps restant
+            # Machine inconnue - accepter (IP dynamique) mais afficher le temps restant avant expulsion
             is_local = ip == "127.0.0.1" or ip == "localhost"
             if not is_local:
-                log_to_file(f"[UNKNOWN] Machine inconnue connectée ({int(time_remaining)}s timeout): {ip}:{port}", "WARNING")
+                log_to_file(f"[UNKNOWN] Machine inconnue (IP dynamique) - {int(time_remaining)}s avant expulsion: {ip}:{port}", "WARNING")
         
         # ✅ ENREGISTRER la connexion (même locale)
         is_local = ip == "127.0.0.1" or ip == "localhost"
@@ -302,12 +306,45 @@ def handle_client(client_socket, client_address):
     finally:
         client_socket.close()
 
+def monitor_unknown_connections():
+    """Thread de surveillance - expulse les machines inconnues après 15s"""
+    while True:
+        try:
+            time.sleep(1)  # Vérifier toutes les 1 seconde
+            current_time = time.time()
+            ips_to_remove = []
+            
+            for ip, connection_time in list(unknown_connections.items()):
+                elapsed = current_time - connection_time
+                
+                if elapsed >= TIMEOUT_UNKNOWN:
+                    # Temps écoulé - expulser
+                    log_to_file(f"🚫 MACHINE INCONNUE EXPULSÉE - Timeout 15s: {ip}", "WARNING")
+                    create_notification("TIMEOUT", f"⏱️ EXPULSION: Machine inconnue {ip} expulsée après 15s")
+                    
+                    # Bloquer avec iptables
+                    block_ip(ip)
+                    ips_to_remove.append(ip)
+            
+            # Nettoyer les IPs expulsées
+            for ip in ips_to_remove:
+                if ip in unknown_connections:
+                    del unknown_connections[ip]
+        
+        except Exception as e:
+            print(f"✗ Erreur monitoring: {e}")
+
 def start_server():
     """Démarre le serveur TCP"""
     ensure_log_file()
     
     # Ajouter des logs d'initialisation
     log_to_file("Serveur démarré")
+    
+    # ✅ NOUVEAU: Lancer le thread de surveillance des machines inconnues
+    monitor_thread = threading.Thread(target=monitor_unknown_connections, daemon=True)
+    monitor_thread.start()
+    print(f"✓ Thread de surveillance des connexions inconnues lancé")
     
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
