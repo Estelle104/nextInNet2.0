@@ -1,29 +1,15 @@
 Line 45: DEPRECATED: 'dump_file' configuration variable is not used anymore
-wlo1: interface state UNINITIALIZED->COUNTRY_UPDATE
-wlo1: interface state COUNTRY_UPDATE->ENABLED
-wlo1: AP-ENABLED 
-wlo1: STA d0:c5:d3:8c:09:1d IEEE 802.11: authenticated
-wlo1: STA d0:c5:d3:8c:09:1d IEEE 802.11: associated (aid 1)
-wlo1: AP-STA-CONNECTED d0:c5:d3:8c:09:1d
-wlo1: STA d0:c5:d3:8c:09:1d RADIUS: starting accounting session DDDB05E8A6508CC9
-wlo1: STA d0:c5:d3:8c:09:1d WPA: pairwise key handshake completed (RSN)
-wlo1: EAPOL-4WAY-HS-COMPLETED d0:c5:d3:8c:09:1d
-wlo1: STA 70:dd:a8:68:b9:06 IEEE 802.11: authenticated
-wlo1: STA 70:dd:a8:68:b9:06 IEEE 802.11: associated (aid 2)
-wlo1: AP-STA-CONNECTED 70:dd:a8:68:b9:06
-wlo1: STA 70:dd:a8:68:b9:06 RADIUS: starting accounting session AFD6F7424EB8CF65
-wlo1: STA 70:dd:a8:68:b9:06 WPA: pairwise key handshake completed (RSN)
-wlo1: EAPOL-4WAY-HS-COMPLETED 70:dd:a8:68:b9:06
-wlo1: STA b4:c4:fc:f1:85:16 IEEE 802.11: authenticated
-wlo1: STA b4:c4:fc:f1:85:16 IEEE 802.11: associated (aid 3)
-wlo1: AP-STA-CONNECTED b4:c4:fc:f1:85:16
-wlo1: STA b4:c4:fc:f1:85:16 RADIUS: starting accounting session 2EDCA75CAC772989
-wlo1: STA b4:c4:fc:f1:85:16 WPA: pairwise key handshake completed (RSN)
-wlo1: EAPOL-4WAY-HS-COMPLETED b4:c4:fc:f1:85:16
-wlo1: interface state ENABLED->DISABLED
-wlo1: AP-STA-DISCONNECTED b4:c4:fc:f1:85:16
-wlo1: AP-STA-DISCONNECTED 70:dd:a8:68:b9:06
-wlo1: AP-STA-DISCONNECTED d0:c5:d3:8c:09:1d
-wlo1: AP-DISABLED 
-wlo1: CTRL-EVENT-TERMINATING 
-nl80211: deinit ifname=wlo1 disabled_11b_rates=0
+wlp2s0: interface state UNINITIALIZED->COUNTRY_UPDATE
+wlp2s0: interface state COUNTRY_UPDATE->ENABLED
+wlp2s0: AP-ENABLED 
+wlp2s0: STA b4:d5:bd:af:a4:65 IEEE 802.11: authenticated
+wlp2s0: STA b4:d5:bd:af:a4:65 IEEE 802.11: associated (aid 1)
+wlp2s0: AP-STA-CONNECTED b4:d5:bd:af:a4:65
+wlp2s0: STA b4:d5:bd:af:a4:65 RADIUS: starting accounting session F041B5D5BA656229
+wlp2s0: STA b4:d5:bd:af:a4:65 WPA: pairwise key handshake completed (RSN)
+wlp2s0: EAPOL-4WAY-HS-COMPLETED b4:d5:bd:af:a4:65
+wlp2s0: interface state ENABLED->DISABLED
+wlp2s0: AP-STA-DISCONNECTED b4:d5:bd:af:a4:65
+wlp2s0: AP-DISABLED 
+wlp2s0: CTRL-EVENT-TERMINATING 
+nl80211: deinit ifname=wlp2s0 disabled_11b_rates=0
