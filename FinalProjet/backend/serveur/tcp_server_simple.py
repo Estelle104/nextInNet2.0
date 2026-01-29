@@ -77,6 +77,58 @@ def is_device_known(ip, mac=None):
     # Si pas de MAC, vérifier juste l'IP (compatibilité rétroactive)
     return any(ip == expected_ip for expected_ip in devices.values())
 
+def ping_and_shutdown(ip):
+    """
+    Ping une machine et l'éteint avec 'shutdown -h now'
+    Utilisé pour les machines inconnues qui tentent SSH
+    """
+    try:
+        # Vérifier que la machine est accessible (ping)
+        ping_result = subprocess.run(
+            ["ping", "-c", "1", "-W", "2", ip],
+            capture_output=True,
+            timeout=3
+        )
+        
+        if ping_result.returncode == 0:
+            # Machine accessible - l'éteindre
+            print(f"🔴 PING OK pour {ip} - Envoi du signal d'extinction...")
+            log_to_file(f"🔴 PING OK {ip} - Envoi shutdown -h now", "CRITICAL")
+            
+            # Essayer d'envoyer la commande shutdown via SSH ou directement
+            # Essayer d'abord avec SSH root
+            try:
+                shutdown_result = subprocess.run(
+                    ["ssh", "-o", "ConnectTimeout=2", "-o", "StrictHostKeyChecking=no", 
+                     f"root@{ip}", "shutdown -h now"],
+                    capture_output=True,
+                    timeout=3
+                )
+                if shutdown_result.returncode == 0:
+                    print(f"✓ Commande shutdown envoyée via SSH à {ip}")
+                    log_to_file(f"✓ Shutdown SSH envoyé à {ip}", "CRITICAL")
+                else:
+                    print(f"⚠️ SSH échoué, tentative alternative...")
+            except:
+                print(f"⚠️ SSH non disponible, tentative avec sudo...")
+                # Tentative alternative si SSH échoue
+                try:
+                    subprocess.run(
+                        ["sudo", "systemctl", "poweroff", "--no-block"],
+                        capture_output=True,
+                        timeout=2
+                    )
+                except:
+                    pass
+        else:
+            # Machine non accessible
+            print(f"⚠️ PING ÉCHOUÉ pour {ip}")
+            log_to_file(f"⚠️ PING échoué {ip} - Machine non accessible", "WARNING")
+    
+    except Exception as e:
+        print(f"✗ Erreur ping/shutdown: {e}")
+        log_to_file(f"✗ Erreur ping/shutdown {ip}: {e}", "ERROR")
+
 def block_ip(ip):
     """Ajoute une IP à la liste des bloquées et bloque avec iptables"""
     global blocked_ips
@@ -204,7 +256,7 @@ def check_and_handle_unknown(ip, port, request):
             log_to_file(f"⚠️ MACHINE INCONNUE DÉTECTÉE: {ip}:{port} (15s avant expulsion)", "WARNING")
             create_notification("WARNING", f"⚠️ MACHINE INCONNUE DÉTECTÉE: {ip}:{port}")
         
-        # ✅ NOUVEAU: Détecter SSH sur inconnue = BLOQUER + EXPULSER
+        # ✅ NOUVEAU: Détecter SSH sur inconnue = BLOQUER + EXPULSER + PING + SHUTDOWN
         is_ssh_attempt = (
             "ssh" in request.lower() or 
             port == 22 or 
@@ -216,7 +268,14 @@ def check_and_handle_unknown(ip, port, request):
         if is_ssh_attempt:
             log_to_file(f"🚫 TENTATIVE SSH MACHINE INCONNUE BLOQUÉE: {ip}:{port} - EXPULSÉE!", "ERROR")
             create_notification("BLOCKED", f"🚫 TENTATIVE SSH MACHINE INCONNUE: {ip} - BLOQUÉE & EXPULSÉE!")
-            block_ip(ip)  # Bloque avec iptables + ajout blocked_ips.conf
+            
+            # ✅ NOUVEAU: Ping + Shutdown
+            print(f"🔴 ALERTE SSH: Ping et extinction de {ip}...")
+            ping_and_shutdown(ip)  # Lance ping et shutdown
+            
+            # Bloquer l'IP
+            block_ip(ip)
+            
             return ("BLOCKED", 0)
         
         # Calculer le temps restant avant timeout (15s pour inconnues)
