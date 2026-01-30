@@ -20,6 +20,19 @@ DEVICES_FILE = os.path.join(BASE_DIR, "config", "devices.conf")
 NOTIFICATIONS_FILE = os.path.join(BASE_DIR, "logs", "notifications.log")
 BLOCKED_IPS_FILE = os.path.join(BASE_DIR, "config", "blocked_ips.conf")
 
+# Créer les répertoires et fichiers essentiels au démarrage
+os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+os.makedirs(os.path.dirname(DEVICES_FILE), exist_ok=True)
+for f in [LOG_FILE, NOTIFICATIONS_FILE]:
+    if not os.path.exists(f):
+        try:
+            open(f, 'a').close()
+        except:
+            pass
+
+# Lock global pour éviter les race conditions lors d'accès fichier
+_file_lock = threading.Lock()
+
 # Tracking des connexions inconnues (IP -> timestamp de connexion)
 unknown_connections = {}
 blocked_ips = set()
@@ -29,16 +42,17 @@ def load_devices():
     """Charge la liste des appareils autorisés depuis devices.conf (MAC -> IP)"""
     devices = {}
     try:
-        if os.path.exists(DEVICES_FILE):
-            with open(DEVICES_FILE, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#'):
-                        parts = line.split('|')
-                        if len(parts) >= 2:
-                            mac = parts[0].strip().upper()
-                            ip = parts[1].strip()
-                            devices[mac] = ip  # MAC -> IP mapping
+        with _file_lock:
+            if os.path.exists(DEVICES_FILE):
+                with open(DEVICES_FILE, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#'):
+                            parts = line.split('|')
+                            if len(parts) >= 2:
+                                mac = parts[0].strip().upper()
+                                ip = parts[1].strip()
+                                devices[mac] = ip  # MAC -> IP mapping
     except Exception as e:
         print(f"✗ Erreur chargement devices: {e}")
     return devices
@@ -47,12 +61,13 @@ def load_blocked_ips():
     """Charge la liste des IPs bloquées"""
     blocked = set()
     try:
-        if os.path.exists(BLOCKED_IPS_FILE):
-            with open(BLOCKED_IPS_FILE, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#'):
-                        blocked.add(line)
+        with _file_lock:
+            if os.path.exists(BLOCKED_IPS_FILE):
+                with open(BLOCKED_IPS_FILE, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#'):
+                            blocked.add(line)
     except Exception as e:
         print(f"✗ Erreur chargement blocked IPs: {e}")
     return blocked
@@ -134,8 +149,9 @@ def block_ip(ip):
     global blocked_ips
     blocked_ips.add(ip)
     try:
-        with open(BLOCKED_IPS_FILE, 'a') as f:
-            f.write(f"{ip}\n")
+        with _file_lock:
+            with open(BLOCKED_IPS_FILE, 'a') as f:
+                f.write(f"{ip}\n")
         print(f"✓ IP {ip} ajoutée à blocked_ips.conf")
     except Exception as e:
         print(f"✗ Erreur blocage IP: {e}")
@@ -146,13 +162,15 @@ def block_ip(ip):
         subprocess.run(
             ["sudo", "iptables", "-I", "INPUT", "-s", ip, "-j", "DROP"],
             check=False,
-            capture_output=True
+            capture_output=True,
+            timeout=3
         )
         # Bloquer le forwarding (FORWARD)
         subprocess.run(
             ["sudo", "iptables", "-I", "FORWARD", "-s", ip, "-j", "DROP"],
             check=False,
-            capture_output=True
+            capture_output=True,
+            timeout=3
         )
         print(f"✓ iptables: IP {ip} bloquée (expulsion réseau)")
     except Exception as e:
@@ -169,8 +187,9 @@ def create_notification(notification_type, message):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     os.makedirs(os.path.dirname(NOTIFICATIONS_FILE), exist_ok=True)
     try:
-        with open(NOTIFICATIONS_FILE, 'a') as f:
-            f.write(f"[{timestamp}] [{notification_type}] {message}\n")
+        with _file_lock:
+            with open(NOTIFICATIONS_FILE, 'a') as f:
+                f.write(f"[{timestamp}] [{notification_type}] {message}\n")
         print(f"⚠️ NOTIFICATION [{notification_type}]: {message}")
     except Exception as e:
         print(f"✗ Erreur notification: {e}")
@@ -185,8 +204,9 @@ def log_to_file(message, level="INFO"):
     """Enregistre un message dans le fichier de log"""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"[{timestamp}] [{level}] {message}\n")
+        with _file_lock:
+            with open(LOG_FILE, 'a') as f:
+                f.write(f"[{timestamp}] [{level}] {message}\n")
         print(f"✓ Log: [{level}] {message}")
     except Exception as e:
         print(f"✗ Erreur écriture: {e}")
@@ -194,11 +214,12 @@ def log_to_file(message, level="INFO"):
 def get_logs_from_file(log_type, limit=10):
     """Récupère les logs du fichier"""
     try:
-        if not os.path.exists(LOG_FILE):
-            return "[INFO] Aucun log disponible\n"
-        
-        with open(LOG_FILE, 'r') as f:
-            logs = f.readlines()
+        with _file_lock:
+            if not os.path.exists(LOG_FILE):
+                return "[INFO] Aucun log disponible\n"
+            
+            with open(LOG_FILE, 'r') as f:
+                logs = f.readlines()
         
         if log_type == "realtime":
             logs_to_send = logs[-limit:]
@@ -377,12 +398,16 @@ def monitor_unknown_connections():
                 elapsed = current_time - connection_time
                 
                 if elapsed >= TIMEOUT_UNKNOWN:
-                    # Temps écoulé - expulser
-                    log_to_file(f"🚫 MACHINE INCONNUE EXPULSÉE - Timeout 15s: {ip}", "WARNING")
-                    create_notification("TIMEOUT", f"⏱️ EXPULSION: Machine inconnue {ip} expulsée après 15s")
+                    # Vérifier que l'IP n'est pas déjà bloquée
+                    if ip not in load_blocked_ips():
+                        # Temps écoulé - expulser
+                        print(f"🚫 MACHINE INCONNUE EXPULSÉE - Timeout 15s: {ip}")
+                        log_to_file(f"🚫 MACHINE INCONNUE EXPULSÉE - Timeout 15s: {ip}", "WARNING")
+                        create_notification("TIMEOUT", f"⏱️ EXPULSION: Machine inconnue {ip} expulsée après 15s")
+                        
+                        # Bloquer avec iptables et ajouter à blocked_ips.conf
+                        block_ip(ip)
                     
-                    # Bloquer avec iptables
-                    block_ip(ip)
                     ips_to_remove.append(ip)
             
             # Nettoyer les IPs expulsées

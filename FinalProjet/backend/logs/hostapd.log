@@ -2,28 +2,15 @@ Line 45: DEPRECATED: 'dump_file' configuration variable is not used anymore
 wlp2s0: interface state UNINITIALIZED->COUNTRY_UPDATE
 wlp2s0: interface state COUNTRY_UPDATE->ENABLED
 wlp2s0: AP-ENABLED 
-wlp2s0: INTERFACE-DISABLED 
-wlp2s0: INTERFACE-ENABLED 
-nl80211: kernel reports: key not allowed
-Failed to set beacon parameters
-wlp2s0: STA 48:a9:8a:9a:a5:41 IEEE 802.11: disassociated
-wlp2s0: INTERFACE-DISABLED 
-rfkill: WLAN hard blocked
-rfkill: WLAN unblocked
-wlp2s0: INTERFACE-ENABLED 
-nl80211: kernel reports: key not allowed
-Failed to set beacon parameters
-wlp2s0: STA ec:fc:c6:54:d4:d2 IEEE 802.11: deauthenticated due to inactivity (timer DEAUTH/REMOVE)
-wlp2s0: STA ec:fc:c6:54:d4:d2 IEEE 802.11: disassociated
-wlp2s0: STA f0:b4:d2:b1:79:f8 IEEE 802.11: disassociated
-wlp2s0: STA f0:b4:d2:b1:79:f8 IEEE 802.11: disassociated
-wlp2s0: STA f0:b4:d2:b1:79:f8 IEEE 802.11: disassociated
-wlp2s0: STA f0:b4:d2:b1:79:f8 IEEE 802.11: disassociated
-wlp2s0: STA f0:b4:d2:b1:79:f8 IEEE 802.11: disassociated
-wlp2s0: STA f0:b4:d2:b1:79:f8 IEEE 802.11: disassociated
-wlp2s0: STA ec:fc:c6:53:7e:f2 IEEE 802.11: deauthenticated due to inactivity (timer DEAUTH/REMOVE)
-wlp2s0: STA ec:fc:c6:53:7e:f2 IEEE 802.11: disassociated
-wlp2s0: INTERFACE-DISABLED 
-wlp2s0: INTERFACE-ENABLED 
-nl80211: kernel reports: key not allowed
-Failed to set beacon parameters
+wlp2s0: STA b4:d5:bd:af:a4:65 IEEE 802.11: authenticated
+wlp2s0: STA b4:d5:bd:af:a4:65 IEEE 802.11: associated (aid 1)
+wlp2s0: AP-STA-CONNECTED b4:d5:bd:af:a4:65
+wlp2s0: STA b4:d5:bd:af:a4:65 RADIUS: starting accounting session 0FBB15D4B3E27862
+wlp2s0: STA b4:d5:bd:af:a4:65 WPA: pairwise key handshake completed (RSN)
+wlp2s0: EAPOL-4WAY-HS-COMPLETED b4:d5:bd:af:a4:65
+wlp2s0: AP-STA-DISCONNECTED b4:d5:bd:af:a4:65
+Line 45: DEPRECATED: 'dump_file' configuration variable is not used anymore
+wlp2s0: interface state ENABLED->DISABLED
+wlp2s0: AP-DISABLED 
+wlp2s0: CTRL-EVENT-TERMINATING 
+nl80211: deinit ifname=wlp2s0 disabled_11b_rates=0

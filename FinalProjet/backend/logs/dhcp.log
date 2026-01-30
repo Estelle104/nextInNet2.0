@@ -1,7 +1,6 @@
-[2026-01-28 20:22:03] Interface réseau fournie: wlp2s0
-[2026-01-28 20:22:03] Démarrage du serveur DHCP sur l'interface: wlp2s0
-[2026-01-28 20:22:03] 🚀 Serveur DHCP démarré sur port 67
-[2026-01-28 20:22:03]    Interface: wlp2s0
-[2026-01-28 20:22:03]    Réseau: 192.168.43.0/255.255.255.0
-[2026-01-28 20:22:03]    Gateway: 192.168.43.1
-[2026-01-28 20:22:03]    Pool: 192.168.43.100-200
+Traceback (most recent call last):
+  File "/home/itu/S3/MrHaga/projet/nextInNet2.0/FinalProjet/backend/serveur/dhcp_server.py", line 254, in <module>
+    start()
+  File "/home/itu/S3/MrHaga/projet/nextInNet2.0/FinalProjet/backend/serveur/dhcp_server.py", line 225, in start
+    sock.setsockopt(
+OSError: [Errno 19] No such device

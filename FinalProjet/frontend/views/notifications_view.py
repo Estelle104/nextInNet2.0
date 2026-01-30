@@ -16,10 +16,14 @@ BACKEND_DIR = os.path.join(os.path.dirname(CURRENT_DIR), "..", "backend")
 NOTIFICATIONS_FILE = os.path.join(BACKEND_DIR, "logs", "notifications.log")
 
 class NotificationsView(tk.Frame):
+    # Lock global pour éviter les race conditions
+    _file_lock = threading.Lock()
+    
     def __init__(self, parent):
         super().__init__(parent)
         self.auto_refresh = tk.BooleanVar(value=True)
         self.notification_filter = tk.StringVar(value="ALL")
+        self._refresh_thread = None
         
         self.setup_ui()
         
@@ -45,7 +49,7 @@ class NotificationsView(tk.Frame):
         # Checkbox auto-refresh
         ttk.Checkbutton(
             header_frame,
-            text="Auto-refresh (2s)",
+            text="Auto-refresh (16s)",
             variable=self.auto_refresh,
             command=self.toggle_auto_refresh
         ).pack(side="left", padx=20)
@@ -85,12 +89,14 @@ class NotificationsView(tk.Frame):
         self.status_label = ttk.Label(status_frame, text="En attente...", relief="sunken")
         self.status_label.pack(fill="x")
         
-        # Premier chargement
+        # Premier chargement - retardé pour éviter les collisions
+        self.after(100, self._delayed_init)
+    
+    def _delayed_init(self):
+        """Initialisation retardée"""
         self.refresh_notifications()
-        
-        # Auto-refresh
         if self.auto_refresh.get():
-            self.start_auto_refresh()
+            self.after(500, self.start_auto_refresh)
     
     def setup_colors(self):
         """Configure les couleurs pour les différents types d'alerte"""
@@ -101,19 +107,21 @@ class NotificationsView(tk.Frame):
         self.notif_display.tag_config("timestamp", foreground="#81C784", font=("Courier", 8))          # Vert clair
     
     def get_notifications(self):
-        """Récupère les notifications du fichier"""
+        """Récupère les notifications du fichier avec protection contre les race conditions"""
         notifications = []
         try:
+            # Vérifier que le fichier existe
             if not os.path.exists(NOTIFICATIONS_FILE):
                 return notifications
             
-            with open(NOTIFICATIONS_FILE, 'r') as f:
-                notifications = f.readlines()
-            
-            # Appliquer le filtre
-            filter_type = self.notification_filter.get()
-            if filter_type != "ALL":
-                notifications = [n for n in notifications if f"[{filter_type}]" in n]
+            with NotificationsView._file_lock:
+                with open(NOTIFICATIONS_FILE, 'r', encoding='utf-8', errors='replace') as f:
+                    notifications = f.readlines()
+                
+                # Appliquer le filtre
+                filter_type = self.notification_filter.get()
+                if filter_type != "ALL":
+                    notifications = [n for n in notifications if f"[{filter_type}]" in n]
             
             return notifications
         except Exception as e:
@@ -167,12 +175,12 @@ class NotificationsView(tk.Frame):
             self.stop_auto_refresh()
     
     def start_auto_refresh(self):
-        """Démarre l'auto-refresh toutes les 2 secondes"""
+        """Démarre l'auto-refresh toutes les 16 secondes"""
         def auto_refresh_loop():
             while self.auto_refresh.get():
                 try:
                     self.refresh_notifications()
-                    threading.Event().wait(2)  # Attend 2 secondes
+                    threading.Event().wait(16)  # Attend 16 secondes
                 except:
                     pass
         
@@ -186,8 +194,9 @@ class NotificationsView(tk.Frame):
     def clear_notifications(self):
         """Efface le fichier de notifications"""
         try:
-            if os.path.exists(NOTIFICATIONS_FILE):
-                open(NOTIFICATIONS_FILE, 'w').close()
+            with NotificationsView._file_lock:
+                if os.path.exists(NOTIFICATIONS_FILE):
+                    open(NOTIFICATIONS_FILE, 'w').close()
             self.refresh_notifications()
             self.status_label.config(text="✓ Notifications effacées")
         except Exception as e:
